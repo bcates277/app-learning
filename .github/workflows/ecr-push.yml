@@ -1,0 +1,48 @@
+name: Build and Push Docker Image to ECR
+
+on:
+  push:
+    branches:
+      - main
+
+env:
+  AWS_REGION: us-east-1
+  ECR_REPOSITORY: app-learner-backend
+  IMAGE_TAG: latest
+  ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
+
+jobs:
+  push-to-ecr:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      id-token: write
+      actions: read
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v3
+
+      - name: List files in workspace
+        run: ls -R
+
+      - name: Configure AWS credentials (via OIDC)
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          role-session-name: GitHubActionsSession
+          aws-region: us-east-1
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+
+      - name: Build Docker image
+        run: |
+          docker build -t $ECR_REPOSITORY:$IMAGE_TAG -f ./app/Dockerfile ./app
+          docker tag $ECR_REPOSITORY:$IMAGE_TAG ${{ steps.login-ecr.outputs.registry }}/$ECR_REPOSITORY:$IMAGE_TAG
+
+      - name: Push Docker image to ECR
+        run: |
+          docker push ${{ steps.login-ecr.outputs.registry }}/$ECR_REPOSITORY:$IMAGE_TAG

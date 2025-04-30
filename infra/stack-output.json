@@ -1,0 +1,8 @@
+{
+  "bucketName": "my-invoicer-333",
+  "dbEndpoint": "invoicer-rds8024eec.cw9aei2yawjs.us-east-1.rds.amazonaws.com:5432",
+  "dbInstanceId": "db-G25UTJCNMKJOSKCUSQ7GN5YXDY",
+  "dbInstanceUser": "invoicer",
+  "dbName": "invoicerrds",
+  "securityGroupId": "sg-084bd73b8edf1b0b5"
+}

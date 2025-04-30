@@ -1,0 +1,12 @@
+config:
+  aws:region: us-east-1
+  my-pulumi-invoicer:vpcId:
+    secure: AAABAOgx1nQ8R4OaKYwe3xlF/1a4ghEDhlt7cXxGF9F+eJUM6768YPySAt1BXGEto3lrm/8=
+  my-pulumi-invoicer:rdsPassword:
+    secure: AAABACyzW/FTYq50Zgb5zEG6VXNZPxbWUp15Xjl5RVJ4vQMmd4IIIlXo0A6+NxJubMye2Q==
+  my-pulumi-invoicer:rdsHost:
+    secure: AAABADDHLyXNBM77iUYqq2YvsxTCXrZ4uipUnGldU4xXQMxudGaT/GMaKl0X+G0+eTuX+ymYomjiW+Qk5ccjoDS6DCAFvOuN+oLEv0I1sg+qyXVhMB1Kh8GZNUqUBpqCDg==
+  my-pulumi-invoicer:rdsUser:
+    secure: AAABAK3BN6ymLRm3PCwai34u3/3Z6UCsfIaJwKvFK4IYa8HdUiK8jQ==
+  my-pulumi-invoicer:rdsDBName:
+    secure: AAABAA/f7V/gp64WVcdg0BapUIlV9l0e2/py14TmhqKGE71zs88tQdlH6g==
