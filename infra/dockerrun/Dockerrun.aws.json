@@ -1,7 +1,7 @@
 {
     "AWSEBDockerrunVersion": "1",
     "Image": {
-      "Name": "bcates227/app-learning",
+      "Name": "074643188647.dkr.ecr.us-east-1.amazonaws.com/app-learner-backend:latest",
       "Update": "true"
     },
     "Ports": [
@@ -10,4 +10,4 @@
       }
     ],
     "Logging": "/var/log/nginx"
-}
+  }

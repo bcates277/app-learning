@@ -1,40 +1,57 @@
 import * as pulumi from "@pulumi/pulumi";
 import * as aws from "@pulumi/aws";
-import { ElasticBeanstalkArgs } from "./types";
+
+export interface ElasticBeanstalkArgs {
+  appName: string;
+  environmentName: string;
+  solutionStackName: string;
+  dockerrunPath: string; // path to folder that contains Dockerrun.aws.json
+  s3Bucket: pulumi.Input<string>;
+  settings: { namespace: string; name: string; value: pulumi.Input<string> }[];
+}
 
 export class ElasticBeanstalkApp extends pulumi.ComponentResource {
-  public readonly application: aws.elasticbeanstalk.Application;
-  public readonly environment: aws.elasticbeanstalk.Environment;
-
-  constructor(name: string, args: ElasticBeanstalkArgs, opts?: pulumi.ComponentResourceOptions) {
+  constructor(
+    name: string,
+    args: ElasticBeanstalkArgs,
+    opts?: pulumi.ComponentResourceOptions
+  ) {
     super("custom:elasticbeanstalk:ElasticBeanstalkApp", name, {}, opts);
 
-    this.application = new aws.elasticbeanstalk.Application(`${name}-app`, {
+    const app = new aws.elasticbeanstalk.Application(`${name}-app`, {
       name: args.appName,
     }, { parent: this });
 
-    let appVersion: aws.elasticbeanstalk.ApplicationVersion | undefined;
+    const versionLabel = `${args.appName}-${pulumi.getStack()}-${Date.now()}`;
 
-    if (args.versionLabel && args.s3Bucket && args.s3Key) {
-      appVersion = new aws.elasticbeanstalk.ApplicationVersion(`${name}-version`, {
-        application: this.application.name,
-        bucket: args.s3Bucket,
-        key: args.s3Key,
-        name: args.versionLabel,
-      }, { parent: this });
-    }
+    // Upload zip to S3
+    const zipArchive = new pulumi.asset.FileArchive(args.dockerrunPath);
+    const bucketObject = new aws.s3.BucketObject(`${versionLabel}.zip`, {
+      bucket: args.s3Bucket,
+      source: zipArchive,
+      contentType: "dockerrun/zip",
+    }, { parent: this });
 
-    this.environment = new aws.elasticbeanstalk.Environment(`${name}-env`, {
+    const appVersion = pulumi
+      .all([bucketObject.key, args.s3Bucket])
+      .apply(([key, bucket]) => new aws.elasticbeanstalk.ApplicationVersion(`${name}-v`, {
+        application: app.name,
+        bucket,
+        key,
+        name: versionLabel,
+      }, { parent: this }));
+
+    const env = new aws.elasticbeanstalk.Environment(`${name}-env`, {
       name: args.environmentName,
-      application: this.application.name,
+      application: app.name,
       solutionStackName: args.solutionStackName,
-      version: appVersion ? appVersion : undefined,
+      version: appVersion,
       settings: args.settings,
     }, { parent: this });
 
     this.registerOutputs({
-      application: this.application,
-      environment: this.environment,
+      application: app,
+      environment: env,
     });
   }
 }

@@ -12,6 +12,8 @@ import { IamInstanceRoleComponent } from "./modules/IAM/instanceRole";
 import { ElasticBeanstalkApp } from "./modules/elasticbeanstalk/ebs";
 import { EcrComponent } from "./modules/ecr";
 import { GithubOidcComponent } from "./modules/IAM/GithubOidcRoleComponent";
+import { version } from "os";
+
 
 // ECR repository
 const ecrRepo = new EcrComponent("app-learner-ecr", {
@@ -28,16 +30,8 @@ const githubOidc = new GithubOidcComponent("github-actions", {
   ecrAccess: true,
 });
 
-// This is a JSON file that describes the Docker image and its configuration
-const dockerRunnerJson = fs.readFileSync(
-  path.join(__dirname, "Dockerrun.aws.json"),
-  "utf8"
-);
-
 const s3Args: S3BucketComponentArgs = {
   bucketName: "my-invoicer-333",
-  fileName: "Dockerrun.aws.json",
-  fileContent: dockerRunnerJson,
   acl: "private",
   tags: {
     Environment: "dev",
@@ -51,7 +45,7 @@ const s3Bucket = new S3BucketComponent("invoicer", s3Args);
 const vpcId = config.vpcId;
 const rdsSecurityGroup = new RdsSecurityGroupComponent("my-rds-sg", {
   vpcId: vpcId,
-  allowedCidrBlocks: ["172.31.0.0/16"],
+  allowedCidrBlocks: ["0.0.0.0/0"],
   port: 5432,
   tags: {
     Name: "RDS security group",
@@ -77,10 +71,12 @@ const db = new RdsComponent("invoicer-rds", {
 const instanceRole = new IamInstanceRoleComponent("ebs-instance-role", {
   roleName: "ebs-instance-role",
   policyArns: [
+    "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryFullAccess",
+    "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly",
     "arn:aws:iam::aws:policy/AWSElasticBeanstalkWebTier",
     "arn:aws:iam::aws:policy/AWSElasticBeanstalkWorkerTier",
     "arn:aws:iam::aws:policy/AWSElasticBeanstalkMulticontainerDocker",
-    "arn:aws:iam::aws:policy/AmazonS3FullAccess",
+    "arn:aws:iam::aws:policy/AmazonS3FullAccess"
   ],
 });
 
@@ -100,48 +96,49 @@ const serviceRole = new IamServiceRoleComponent("ebs-service-role", {
     "arn:aws:iam::aws:policy/service-role/AWSElasticBeanstalkEnhancedHealth",
 });
 
-// // // Elastic Beanstalk
+// Optional: create bucket if needed
+const bucket = new aws.s3.Bucket("ebs-artifacts");
 
-// const beanstalkApp = new ElasticBeanstalkApp("Invoicer-App", {
-//   appName: "Invoicer-App",
-//   environmentName: "Invoicer-env",
-//   solutionStackName: "64bit Amazon Linux 2023 v4.5.1 running Docker",
-//   versionLabel: "1.10.0",
-//   s3Bucket: s3Args.bucketName,
-//   s3Key: "Dockerrun.aws.json",
-//   settings: [
-//     {
-//       namespace: "aws:autoscaling:launchconfiguration",
-//       name: "IamInstanceProfile",
-//       value: "ebs-instance-profile",
-//     },
-//     {
-//       namespace: "aws:elasticbeanstalk:environment",
-//       name: "ServiceRole",
-//       value: "ebs-service-role",
-//     },
-//     {
-//       namespace: "aws:elasticbeanstalk:application:environment",
-//       name: "INVOICER_POSTGRES_USER",
-//       value: config.rdsUser,
-//     },
-//     {
-//       namespace: "aws:elasticbeanstalk:application:environment",
-//       name: "INVOICER_POSTGRES_PASSWORD",
-//       value: config.rdsPassword,
-//     },
-//     {
-//       namespace: "aws:elasticbeanstalk:application:environment",
-//       name: "INVOICER_POSTGRES_DB",
-//       value: config.rdsDBName,
-//     },
-//     {
-//       namespace: "aws:elasticbeanstalk:application:environment",
-//       name: "INVOICER_POSTGRES_HOST",
-//       value: config.rdsHost,
-//     },
-//   ],
-// });
+const beanstalk = new ElasticBeanstalkApp("App-learner", {
+  appName: "App-learner",
+  environmentName: "App-env",
+  solutionStackName: "64bit Amazon Linux 2023 v4.5.1 running Docker",
+  dockerrunPath: "./dockerrun", // path to folder containing Dockerrun.aws.json
+  s3Bucket: bucket.bucket,
+  settings: [
+    {
+      namespace: "aws:autoscaling:launchconfiguration",
+      name: "IamInstanceProfile",
+      value: "ebs-instance-profile",
+    },
+    {
+      namespace: "aws:elasticbeanstalk:environment",
+      name: "ServiceRole",
+      value: "ebs-service-role",
+    },
+    {
+      namespace: "aws:elasticbeanstalk:application:environment",
+      name: "INVOICER_POSTGRES_USER",
+      value: config.rdsUser,
+    },
+    {
+      namespace: "aws:elasticbeanstalk:application:environment",
+      name: "INVOICER_POSTGRES_PASSWORD",
+      value: config.rdsPassword,
+    },
+    {
+      namespace: "aws:elasticbeanstalk:application:environment",
+      name: "INVOICER_POSTGRES_DB",
+      value: config.rdsDBName,
+    },
+    {
+      namespace: "aws:elasticbeanstalk:application:environment",
+      name: "INVOICER_POSTGRES_HOST",
+      value: config.rdsHost,
+    },
+  ],
+});
+
 
 export const dbEndpoint = db.dbInstance.endpoint;
 export const dbName = db.dbInstance.dbName;
@@ -149,7 +146,7 @@ export const dbInstanceId = db.dbInstance.id;
 export const dbInstanceUser = db.dbInstance.username;
 export const ecrRepoUrl = ecrRepo.repository.repositoryUrl;
 export const bucketName = s3Args.bucketName;
-export const securityGroupId = rdsSecurityGroup.securityGroup.id;
+
 
 
 const currentCaller = aws.getCallerIdentity({});
