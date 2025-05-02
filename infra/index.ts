@@ -39,8 +39,6 @@ const s3Args: S3BucketComponentArgs = {
   },
 };
 
-const s3Bucket = new S3BucketComponent("invoicer", s3Args);
-
 // Security group for RDS
 const vpcId = config.vpcId;
 const rdsSecurityGroup = new RdsSecurityGroupComponent("my-rds-sg", {
