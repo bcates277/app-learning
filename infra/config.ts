@@ -9,3 +9,4 @@ export const rdsPassword = config.requireSecret("rdsPassword"); // stored secure
 export const rdsHost = config.requireSecret("rdsHost"); // stored securely
 export const rdsUser = config.requireSecret("rdsUser"); // stored securely
 export const rdsDBName = config.requireSecret("rdsDBName"); // stored securely
+export const orgAccountId = config.requireSecret("orgAccountId");

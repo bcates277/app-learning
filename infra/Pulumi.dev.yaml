@@ -10,3 +10,5 @@ config:
     secure: AAABAK3BN6ymLRm3PCwai34u3/3Z6UCsfIaJwKvFK4IYa8HdUiK8jQ==
   my-pulumi-invoicer:rdsDBName:
     secure: AAABAA/f7V/gp64WVcdg0BapUIlV9l0e2/py14TmhqKGE71zs88tQdlH6g==
+  my-pulumi-invoicer:orgAccountId:
+    secure: AAABABxYFws6yI1h939F/iFLl4WT2ZhTe8JQJQl5bJ0TwdHQTWFwNOtDTkc=
